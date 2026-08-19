@@ -1,0 +1,173 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Gestante {
+  id               Int       @id @default(autoincrement())
+  nome             String
+  nomeSocial       String?
+  identidadeGenero String?
+  email            String    @unique
+  senha            String
+  telefone         String?
+  cpf              String?   @unique
+  dataNascimento   String?
+  tipoSanguineo    String?
+  semanaInicial    Int
+  dataCadastro     DateTime  @default(now())
+  medico           String?
+  alergias         String?
+  medicamentos     String?
+  doencas          String?
+  ultimaMenstruacao String?
+  fotoUrl          String?
+  ativo            Boolean   @default(true)
+  criadoEm         DateTime  @default(now())
+  atualizadoEm     DateTime  @updatedAt
+
+  // LGPD — consentimento de uso de dados, registrado no cadastro
+  consentimentoLgpd   Boolean   @default(false)
+  consentimentoData   DateTime?
+  consentimentoVersao String?
+
+  // LGPD — consentimentos por finalidade, gerenciáveis a qualquer momento pela gestante
+  // (o consentimentoLgpd acima cobre o uso essencial do app pela equipe do AGAR e não é
+  // revogável por aqui, pois é a própria razão de existir da conta).
+  consentimentoPesquisa      Boolean @default(false)
+  consentimentoNotificacoes  Boolean @default(true)
+
+  // Recuperação de senha — código de verificação temporário (hash, nunca em texto puro)
+  resetSenhaHash    String?
+  resetSenhaExpira  DateTime?
+
+  consultas        Consulta[]
+  monitoramentos   Monitoramento[]
+  exames           Exame[]
+  registrosMensais RegistroMensal[]
+  anotacoes        Anotacao[]
+  movimentosFetais MovimentoFetal[]
+
+  @@map("gestantes")
+}
+
+model Consulta {
+  id          Int      @id @default(autoincrement())
+  gestanteId  Int
+  tipo        String
+  data        String
+  hora        String
+  local       String
+  medico      String?
+  obs         String?
+  realizada   Boolean  @default(false)
+  criadoEm    DateTime @default(now())
+
+  gestante    Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+
+  @@map("consultas")
+}
+
+model Monitoramento {
+  id          Int      @id @default(autoincrement())
+  gestanteId  Int
+  tipo        String   // 'pressao' ou 'glicemia'
+  valor1      Int      // sistolica ou glicemia
+  valor2      Int?     // diastolica (só pressão)
+  subtipo     String?  // tipo glicemia: jejum, pós-prandial
+  obs         String?
+  nivelRisco  String?  // 'normal' | 'atencao' | 'alto' | 'critico' — calculado no servidor
+  criadoEm    DateTime @default(now())
+
+  gestante    Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+
+  @@map("monitoramentos")
+}
+
+model Exame {
+  id             Int      @id @default(autoincrement())
+  gestanteId     Int
+  nome           String
+  realizado      Boolean  @default(false)
+  dataRealizacao String?
+  criadoEm      DateTime @default(now())
+
+  gestante       Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+
+  @@map("exames")
+}
+
+model RegistroMensal {
+  id         Int      @id @default(autoincrement())
+  gestanteId Int
+  semana     Int
+  peso       String?
+  au         String?
+  bcf        String?
+  pressao    String?
+  obs        String?
+  criadoEm   DateTime @default(now())
+
+  gestante   Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+
+  @@map("registros_mensais")
+}
+
+model Anotacao {
+  id         Int      @id @default(autoincrement())
+  gestanteId Int
+  texto      String
+  humor      String?
+  criadoEm   DateTime @default(now())
+
+  gestante   Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+
+  @@map("anotacoes")
+}
+
+model MovimentoFetal {
+  id              Int      @id @default(autoincrement())
+  gestanteId      Int
+  quantidade      Int
+  duracaoSegundos Int
+  criadoEm        DateTime @default(now())
+
+  gestante   Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+
+  @@map("movimentos_fetais")
+}
+
+// Conteúdo da tela de Alertas (sinais de emergência/urgência/atenção) — antes ficava fixo
+// no código do app; agora é servido pelo backend para poder ser atualizado sem publicar
+// uma nova versão do aplicativo.
+model SinalAlerta {
+  id       Int      @id @default(autoincrement())
+  nivel    String   // 'EMERGENCIA' | 'URGENTE' | 'ATENCAO'
+  cor      String
+  bg       String
+  borda    String
+  icone    String
+  titulo   String
+  acao     String
+  sintomas String[]
+  ordem    Int      @default(0)
+  ativo    Boolean  @default(true)
+  criadoEm    DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("sinais_alerta")
+}
+
+// Auditoria de acesso (segurança) — registra tentativas de login para detecção de abuso.
+model LogAcesso {
+  id        Int      @id @default(autoincrement())
+  email     String
+  sucesso   Boolean
+  ip        String?
+  criadoEm  DateTime @default(now())
+
+  @@map("logs_acesso")
+}

@@ -1,0 +1,30 @@
+const prisma = require('../lib/prisma');
+
+async function listar(req, res) {
+  const anotacoes = await prisma.anotacao.findMany({
+    where: { gestanteId: req.gestanteId },
+    orderBy: { criadoEm: 'desc' },
+  });
+  return res.json(anotacoes);
+}
+
+async function criar(req, res) {
+  const { texto, humor } = req.body;
+  if (!texto || !texto.trim()) return res.status(400).json({ erro: 'texto é obrigatório' });
+
+  const anotacao = await prisma.anotacao.create({
+    data: { gestanteId: req.gestanteId, texto: texto.trim(), humor },
+  });
+  return res.status(201).json(anotacao);
+}
+
+async function remover(req, res) {
+  const id = Number(req.params.id);
+  const existe = await prisma.anotacao.findFirst({ where: { id, gestanteId: req.gestanteId } });
+  if (!existe) return res.status(404).json({ erro: 'Anotação não encontrada' });
+
+  await prisma.anotacao.delete({ where: { id } });
+  return res.json({ mensagem: 'Anotação removida' });
+}
+
+module.exports = { listar, criar, remover };
