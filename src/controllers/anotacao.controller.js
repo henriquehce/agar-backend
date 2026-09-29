@@ -12,8 +12,13 @@ async function criar(req, res) {
   const { texto, humor } = req.body;
   if (!texto || !texto.trim()) return res.status(400).json({ erro: 'texto é obrigatório' });
 
+  const humorNumero = humor != null ? Number(humor) : null;
+  if (humorNumero != null && (!Number.isInteger(humorNumero) || humorNumero < 1 || humorNumero > 6)) {
+    return res.status(400).json({ erro: 'humor deve ser um número entre 1 e 6' });
+  }
+
   const anotacao = await prisma.anotacao.create({
-    data: { gestanteId: req.gestanteId, texto: texto.trim(), humor },
+    data: { gestanteId: req.gestanteId, texto: texto.trim(), humor: humorNumero },
   });
   return res.status(201).json(anotacao);
 }

@@ -120,7 +120,7 @@ model Anotacao {
   id         Int      @id @default(autoincrement())
   gestanteId Int
   texto      String
-  humor      String?
+  humor      Int?     // escala de humor: 1=😀 2=🙂 3=😐 4=😟 5=😢 6=😴 (ver HUMORES no app)
   criadoEm   DateTime @default(now())
 
   gestante   Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)

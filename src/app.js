@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
 const authRoutes = require('./routes/auth.routes');
 const gestanteRoutes = require('./routes/gestante.routes');
@@ -41,6 +43,10 @@ app.use('/registros-mensais', registroMensalRoutes);
 app.use('/anotacoes', anotacaoRoutes);
 app.use('/movimentos-fetais', movimentoFetalRoutes);
 app.use('/alertas', alertaRoutes);
+
+// Documentação interativa da API (Swagger UI). Desabilita o CSP do Helmet só aqui,
+// pois o CSP padrão bloqueia os scripts/estilos inline que o Swagger UI usa.
+app.use('/api-docs', helmet({ contentSecurityPolicy: false }), swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.get('/', (req, res) => {
   res.json({ status: 'AGAR API online', versao: '1.0.0' });
