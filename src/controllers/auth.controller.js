@@ -58,6 +58,12 @@ async function cadastrar(req, res) {
   return res.status(201).json({ token, gestante: _semSenha(gestante) });
 }
 
+// RNF04: no máximo 30 tentativas de login (sucesso ou falha) por IP a cada 15 minutos.
+// Reaproveita a tabela logs_acesso já existente em vez de depender de rate limit em
+// memória do processo (que não funciona em Workers, onde cada requisição é isolada).
+const LOGIN_LIMITE_TENTATIVAS = 30;
+const LOGIN_JANELA_MS = 15 * 60 * 1000;
+
 async function login(req, res) {
   const { email, senha } = req.body;
 
@@ -66,6 +72,17 @@ async function login(req, res) {
   }
 
   const ip = req.ip;
+
+  if (ip) {
+    const desde = new Date(Date.now() - LOGIN_JANELA_MS);
+    const tentativas = await req.prisma.logAcesso.count({
+      where: { ip, criadoEm: { gte: desde } },
+    });
+    if (tentativas >= LOGIN_LIMITE_TENTATIVAS) {
+      return res.status(429).json({ erro: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' });
+    }
+  }
+
   const gestante = await req.prisma.gestante.findUnique({ where: { email } });
 
   if (!gestante || !gestante.ativo) {
