@@ -1,0 +1,9 @@
+name = "agar-backend"
+main = "src/worker.js"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[d1_databases]]
+binding = "agar_db"
+database_name = "agar-db"
+database_id = "07317c3f-e41d-48be-8611-0b289972e6b8"

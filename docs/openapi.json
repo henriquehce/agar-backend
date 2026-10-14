@@ -7,8 +7,12 @@
   },
   "servers": [
     {
+      "url": "https://agar-backend.henrique-cipriani.workers.dev",
+      "description": "Produção (Cloudflare Workers)"
+    },
+    {
       "url": "http://localhost:3000",
-      "description": "Ambiente de desenvolvimento local"
+      "description": "Ambiente de desenvolvimento local (Express)"
     }
   ],
   "components": {

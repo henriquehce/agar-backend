@@ -1,8 +1,7 @@
-const prisma = require('../lib/prisma');
 const { parseDataBr, diasAteHoje, statusConsulta } = require('../lib/datas');
 
 async function listar(req, res) {
-  const consultas = await prisma.consulta.findMany({
+  const consultas = await req.prisma.consulta.findMany({
     where: { gestanteId: req.gestanteId },
   });
 
@@ -23,7 +22,7 @@ async function criar(req, res) {
     return res.status(400).json({ erro: 'tipo, data, hora e local são obrigatórios' });
   }
 
-  const consulta = await prisma.consulta.create({
+  const consulta = await req.prisma.consulta.create({
     data: { gestanteId: req.gestanteId, tipo, data, hora, local, medico, obs },
   });
   return res.status(201).json(consulta);
@@ -33,10 +32,10 @@ async function atualizar(req, res) {
   const id = Number(req.params.id);
   const { tipo, data, hora, local, medico, obs, realizada } = req.body;
 
-  const existe = await prisma.consulta.findFirst({ where: { id, gestanteId: req.gestanteId } });
+  const existe = await req.prisma.consulta.findFirst({ where: { id, gestanteId: req.gestanteId } });
   if (!existe) return res.status(404).json({ erro: 'Consulta não encontrada' });
 
-  const consulta = await prisma.consulta.update({
+  const consulta = await req.prisma.consulta.update({
     where: { id },
     data: {
       ...(tipo !== undefined && { tipo }),
@@ -53,10 +52,10 @@ async function atualizar(req, res) {
 
 async function remover(req, res) {
   const id = Number(req.params.id);
-  const existe = await prisma.consulta.findFirst({ where: { id, gestanteId: req.gestanteId } });
+  const existe = await req.prisma.consulta.findFirst({ where: { id, gestanteId: req.gestanteId } });
   if (!existe) return res.status(404).json({ erro: 'Consulta não encontrada' });
 
-  await prisma.consulta.delete({ where: { id } });
+  await req.prisma.consulta.delete({ where: { id } });
   return res.json({ mensagem: 'Consulta removida' });
 }
 

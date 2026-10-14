@@ -1,6 +1,5 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const prisma = require('../lib/prisma');
 
 const EXAMES_PADRAO = [
   'Hemograma completo',
@@ -35,14 +34,14 @@ async function cadastrar(req, res) {
     return res.status(400).json({ erro: 'É necessário aceitar os Termos de Uso e a Política de Privacidade para se cadastrar' });
   }
 
-  const existe = await prisma.gestante.findUnique({ where: { email } });
+  const existe = await req.prisma.gestante.findUnique({ where: { email } });
   if (existe) {
     return res.status(409).json({ erro: 'E-mail já cadastrado' });
   }
 
   const hash = await bcrypt.hash(senha, 12);
 
-  const gestante = await prisma.gestante.create({
+  const gestante = await req.prisma.gestante.create({
     data: {
       nome, nomeSocial, identidadeGenero, email, senha: hash, telefone, cpf, dataNascimento, tipoSanguineo,
       semanaInicial: Number(semanaInicial), ultimaMenstruacao, medico, alergias, medicamentos, doencas,
@@ -50,7 +49,7 @@ async function cadastrar(req, res) {
     },
   });
 
-  await prisma.exame.createMany({
+  await req.prisma.exame.createMany({
     data: EXAMES_PADRAO.map(nome => ({ gestanteId: gestante.id, nome })),
   });
 
@@ -67,20 +66,20 @@ async function login(req, res) {
   }
 
   const ip = req.ip;
-  const gestante = await prisma.gestante.findUnique({ where: { email } });
+  const gestante = await req.prisma.gestante.findUnique({ where: { email } });
 
   if (!gestante || !gestante.ativo) {
-    await prisma.logAcesso.create({ data: { email, sucesso: false, ip } });
+    await req.prisma.logAcesso.create({ data: { email, sucesso: false, ip } });
     return res.status(401).json({ erro: 'Credenciais inválidas' });
   }
 
   const senhaOk = await bcrypt.compare(senha, gestante.senha);
   if (!senhaOk) {
-    await prisma.logAcesso.create({ data: { email, sucesso: false, ip } });
+    await req.prisma.logAcesso.create({ data: { email, sucesso: false, ip } });
     return res.status(401).json({ erro: 'Credenciais inválidas' });
   }
 
-  await prisma.logAcesso.create({ data: { email, sucesso: true, ip } });
+  await req.prisma.logAcesso.create({ data: { email, sucesso: true, ip } });
 
   const token = jwt.sign({ id: gestante.id }, process.env.JWT_SECRET, { expiresIn: '30d' });
 
@@ -98,7 +97,7 @@ async function esqueciSenha(req, res) {
     return res.status(400).json({ erro: 'email é obrigatório' });
   }
 
-  const gestante = await prisma.gestante.findUnique({ where: { email } });
+  const gestante = await req.prisma.gestante.findUnique({ where: { email } });
 
   // Resposta genérica sempre — não revela se o e-mail existe ou não na base.
   const resposta = { mensagem: 'Se este e-mail estiver cadastrado, enviamos um código de verificação.' };
@@ -111,7 +110,7 @@ async function esqueciSenha(req, res) {
   const resetSenhaHash = await bcrypt.hash(codigo, 10);
   const resetSenhaExpira = new Date(Date.now() + RESET_CODIGO_TTL_MS);
 
-  await prisma.gestante.update({
+  await req.prisma.gestante.update({
     where: { id: gestante.id },
     data: { resetSenhaHash, resetSenhaExpira },
   });
@@ -134,7 +133,7 @@ async function redefinirSenha(req, res) {
     return res.status(400).json({ erro: 'A nova senha deve ter pelo menos 6 caracteres' });
   }
 
-  const gestante = await prisma.gestante.findUnique({ where: { email } });
+  const gestante = await req.prisma.gestante.findUnique({ where: { email } });
 
   if (!gestante || !gestante.resetSenhaHash || !gestante.resetSenhaExpira) {
     return res.status(400).json({ erro: 'Código inválido ou expirado' });
@@ -149,7 +148,7 @@ async function redefinirSenha(req, res) {
   }
 
   const hash = await bcrypt.hash(novaSenha, 12);
-  await prisma.gestante.update({
+  await req.prisma.gestante.update({
     where: { id: gestante.id },
     data: { senha: hash, resetSenhaHash: null, resetSenhaExpira: null },
   });

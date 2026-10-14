@@ -1,7 +1,6 @@
-const prisma = require('../lib/prisma');
 
 async function listar(req, res) {
-  const exames = await prisma.exame.findMany({
+  const exames = await req.prisma.exame.findMany({
     where: { gestanteId: req.gestanteId },
     orderBy: { criadoEm: 'asc' },
   });
@@ -12,7 +11,7 @@ async function criar(req, res) {
   const { nome, realizado, dataRealizacao } = req.body;
   if (!nome) return res.status(400).json({ erro: 'nome é obrigatório' });
 
-  const exame = await prisma.exame.create({
+  const exame = await req.prisma.exame.create({
     data: {
       gestanteId: req.gestanteId,
       nome,
@@ -27,10 +26,10 @@ async function atualizar(req, res) {
   const id = Number(req.params.id);
   const { realizado, dataRealizacao, nome } = req.body;
 
-  const existe = await prisma.exame.findFirst({ where: { id, gestanteId: req.gestanteId } });
+  const existe = await req.prisma.exame.findFirst({ where: { id, gestanteId: req.gestanteId } });
   if (!existe) return res.status(404).json({ erro: 'Exame não encontrado' });
 
-  const exame = await prisma.exame.update({
+  const exame = await req.prisma.exame.update({
     where: { id },
     data: {
       ...(realizado !== undefined && { realizado: Boolean(realizado) }),
@@ -43,10 +42,10 @@ async function atualizar(req, res) {
 
 async function remover(req, res) {
   const id = Number(req.params.id);
-  const existe = await prisma.exame.findFirst({ where: { id, gestanteId: req.gestanteId } });
+  const existe = await req.prisma.exame.findFirst({ where: { id, gestanteId: req.gestanteId } });
   if (!existe) return res.status(404).json({ erro: 'Exame não encontrado' });
 
-  await prisma.exame.delete({ where: { id } });
+  await req.prisma.exame.delete({ where: { id } });
   return res.json({ mensagem: 'Exame removido' });
 }
 

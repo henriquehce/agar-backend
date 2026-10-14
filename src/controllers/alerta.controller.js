@@ -1,11 +1,16 @@
-const prisma = require('../lib/prisma');
 
 async function listar(req, res) {
-  const sinais = await prisma.sinalAlerta.findMany({
+  const sinais = await req.prisma.sinalAlerta.findMany({
     where: { ativo: true },
     orderBy: { ordem: 'asc' },
   });
-  return res.json(sinais);
+  // `sintomas` é salvo como JSON stringificado (SQLite/D1 não tem array nativo);
+  // devolve como array de verdade pro app, sem mudar o contrato da API.
+  const sinaisComSintomasArray = sinais.map(s => ({
+    ...s,
+    sintomas: JSON.parse(s.sintomas),
+  }));
+  return res.json(sinaisComSintomasArray);
 }
 
 module.exports = { listar };

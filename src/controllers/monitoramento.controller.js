@@ -1,9 +1,8 @@
-const prisma = require('../lib/prisma');
 const { calcularNivelRisco } = require('../lib/risco');
 
 async function listar(req, res) {
   const { tipo } = req.query;
-  const monitoramentos = await prisma.monitoramento.findMany({
+  const monitoramentos = await req.prisma.monitoramento.findMany({
     where: {
       gestanteId: req.gestanteId,
       ...(tipo && { tipo }),
@@ -26,7 +25,7 @@ async function criar(req, res) {
   const v2 = valor2 !== undefined ? Number(valor2) : null;
   const nivelRisco = calcularNivelRisco({ tipo, valor1: v1, valor2: v2, subtipo });
 
-  const registro = await prisma.monitoramento.create({
+  const registro = await req.prisma.monitoramento.create({
     data: {
       gestanteId: req.gestanteId,
       tipo,
@@ -41,7 +40,7 @@ async function criar(req, res) {
 }
 
 async function alertas(req, res) {
-  const recentes = await prisma.monitoramento.findMany({
+  const recentes = await req.prisma.monitoramento.findMany({
     where: {
       gestanteId: req.gestanteId,
       nivelRisco: { in: ['alto', 'critico'] },
@@ -54,10 +53,10 @@ async function alertas(req, res) {
 
 async function remover(req, res) {
   const id = Number(req.params.id);
-  const existe = await prisma.monitoramento.findFirst({ where: { id, gestanteId: req.gestanteId } });
+  const existe = await req.prisma.monitoramento.findFirst({ where: { id, gestanteId: req.gestanteId } });
   if (!existe) return res.status(404).json({ erro: 'Registro não encontrado' });
 
-  await prisma.monitoramento.delete({ where: { id } });
+  await req.prisma.monitoramento.delete({ where: { id } });
   return res.json({ mensagem: 'Registro removido' });
 }
 

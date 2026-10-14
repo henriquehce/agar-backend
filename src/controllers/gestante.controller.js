@@ -1,5 +1,4 @@
 const bcrypt = require('bcryptjs');
-const prisma = require('../lib/prisma');
 
 const PERFIL_SELECT = {
   id: true, nome: true, nomeSocial: true, identidadeGenero: true, email: true, telefone: true, cpf: true,
@@ -12,7 +11,7 @@ const PERFIL_SELECT = {
 };
 
 async function getPerfil(req, res) {
-  const gestante = await prisma.gestante.findUnique({
+  const gestante = await req.prisma.gestante.findUnique({
     where: { id: req.gestanteId },
     select: PERFIL_SELECT,
   });
@@ -24,7 +23,7 @@ async function getPerfil(req, res) {
 async function updatePerfil(req, res) {
   const { nome, nomeSocial, identidadeGenero, telefone, cpf, dataNascimento, tipoSanguineo, semanaInicial, ultimaMenstruacao, medico, alergias, medicamentos, doencas, fotoUrl, consentimentoPesquisa, consentimentoNotificacoes } = req.body;
 
-  const gestante = await prisma.gestante.update({
+  const gestante = await req.prisma.gestante.update({
     where: { id: req.gestanteId },
     data: {
       ...(nome !== undefined && { nome }),
@@ -56,31 +55,31 @@ async function updateSenha(req, res) {
     return res.status(400).json({ erro: 'senhaAtual e novaSenha são obrigatórios' });
   }
 
-  const gestante = await prisma.gestante.findUnique({ where: { id: req.gestanteId } });
+  const gestante = await req.prisma.gestante.findUnique({ where: { id: req.gestanteId } });
   const ok = await bcrypt.compare(senhaAtual, gestante.senha);
   if (!ok) return res.status(401).json({ erro: 'Senha atual incorreta' });
 
   const hash = await bcrypt.hash(novaSenha, 12);
-  await prisma.gestante.update({ where: { id: req.gestanteId }, data: { senha: hash } });
+  await req.prisma.gestante.update({ where: { id: req.gestanteId }, data: { senha: hash } });
 
   return res.json({ mensagem: 'Senha atualizada com sucesso' });
 }
 
 // LGPD — portabilidade: exporta todos os dados pessoais e registros de saúde da gestante.
 async function exportarDados(req, res) {
-  const gestante = await prisma.gestante.findUnique({
+  const gestante = await req.prisma.gestante.findUnique({
     where: { id: req.gestanteId },
     select: PERFIL_SELECT,
   });
   if (!gestante) return res.status(404).json({ erro: 'Gestante não encontrada' });
 
   const [consultas, monitoramentos, exames, registrosMensais, anotacoes, movimentosFetais] = await Promise.all([
-    prisma.consulta.findMany({ where: { gestanteId: req.gestanteId } }),
-    prisma.monitoramento.findMany({ where: { gestanteId: req.gestanteId } }),
-    prisma.exame.findMany({ where: { gestanteId: req.gestanteId } }),
-    prisma.registroMensal.findMany({ where: { gestanteId: req.gestanteId } }),
-    prisma.anotacao.findMany({ where: { gestanteId: req.gestanteId } }),
-    prisma.movimentoFetal.findMany({ where: { gestanteId: req.gestanteId } }),
+    req.prisma.consulta.findMany({ where: { gestanteId: req.gestanteId } }),
+    req.prisma.monitoramento.findMany({ where: { gestanteId: req.gestanteId } }),
+    req.prisma.exame.findMany({ where: { gestanteId: req.gestanteId } }),
+    req.prisma.registroMensal.findMany({ where: { gestanteId: req.gestanteId } }),
+    req.prisma.anotacao.findMany({ where: { gestanteId: req.gestanteId } }),
+    req.prisma.movimentoFetal.findMany({ where: { gestanteId: req.gestanteId } }),
   ]);
 
   return res.json({
@@ -102,11 +101,11 @@ async function excluirConta(req, res) {
     return res.status(400).json({ erro: 'Informe sua senha para confirmar a exclusão' });
   }
 
-  const gestante = await prisma.gestante.findUnique({ where: { id: req.gestanteId } });
+  const gestante = await req.prisma.gestante.findUnique({ where: { id: req.gestanteId } });
   const ok = await bcrypt.compare(senha, gestante.senha);
   if (!ok) return res.status(401).json({ erro: 'Senha incorreta' });
 
-  await prisma.gestante.delete({ where: { id: req.gestanteId } });
+  await req.prisma.gestante.delete({ where: { id: req.gestanteId } });
 
   return res.json({ mensagem: 'Conta e todos os dados associados foram excluídos permanentemente' });
 }

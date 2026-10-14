@@ -134,7 +134,10 @@ const spec = {
     version: '1.0.0',
     description: 'Documentação interativa dos endpoints do back-end do AGAR Digital, agrupados por módulo funcional.',
   },
-  servers: [{ url: 'http://localhost:3000', description: 'Ambiente de desenvolvimento local' }],
+  servers: [
+    { url: 'https://agar-backend.henrique-cipriani.workers.dev', description: 'Produção (Cloudflare Workers)' },
+    { url: 'http://localhost:3000', description: 'Ambiente de desenvolvimento local (Express)' },
+  ],
   components: {
     securitySchemes: {
       bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },

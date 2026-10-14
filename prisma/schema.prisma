@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
 model Gestante {
@@ -152,7 +152,7 @@ model SinalAlerta {
   icone    String
   titulo   String
   acao     String
-  sintomas String[]
+  sintomas String   // JSON stringificado (ex.: '["sintoma 1","sintoma 2"]') — SQLite/D1 não tem tipo array nativo
   ordem    Int      @default(0)
   ativo    Boolean  @default(true)
   criadoEm    DateTime @default(now())
