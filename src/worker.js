@@ -21,7 +21,7 @@ const movimentoFetalCtrl = require('./controllers/movimentoFetal.controller');
 const alertaCtrl = require('./controllers/alerta.controller');
 const swaggerSpec = require('./swagger');
 
-const app = new Hono();
+const app = new Hono({ strict: false });
 
 app.use('*', secureHeaders());
 app.use('*', cors());
