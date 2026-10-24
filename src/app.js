@@ -25,7 +25,7 @@ app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
 
 app.use(express.json());
 
-// Limita tentativas de login/cadastro por IP — mitiga força bruta e spam de contas.
+// Limita tentativas de login/cadastro por IP - mitiga força bruta e spam de contas.
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,

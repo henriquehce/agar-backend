@@ -2,7 +2,7 @@
 // Rodar com: npm run seed:alertas
 //
 // `cor`/`bg`/`borda` devem bater com a escala única de risco em agar-app/src/theme/index.js
-// (riskCrise, riskAtencao, riskLeve) — nunca usar verde aqui, pois no Monitoramento verde
+// (riskCrise, riskAtencao, riskLeve) - nunca usar verde aqui, pois no Monitoramento verde
 // significa "normal", e nenhum destes três níveis é "sem risco".
 // `icone` é o nome de um ícone do Ionicons (@expo/vector-icons), não mais emoji.
 const prisma = require('../src/lib/prisma');
@@ -10,12 +10,12 @@ const prisma = require('../src/lib/prisma');
 const SINAIS = [
   {
     nivel: 'EMERGENCIA',
-    cor: '#C0392B',
-    bg: '#FBE7E4',
-    borda: '#C0392B',
+    cor: '#B23A2E',
+    bg: '#F6E1DC',
+    borda: '#B23A2E',
     icone: 'alert-circle',
     titulo: 'Sinais de emergência',
-    acao: 'Se notar qualquer um destes sinais, vá até a maternidade — não precisa esperar a consulta.',
+    acao: 'Se notar qualquer um destes sinais, vá até a maternidade - não precisa esperar a consulta.',
     sintomas: JSON.stringify([
       'Sangramento vaginal intenso',
       'Dor abdominal muito forte e constante',
@@ -27,9 +27,9 @@ const SINAIS = [
   },
   {
     nivel: 'URGENTE',
-    cor: '#C77D0A',
-    bg: '#FBF1DE',
-    borda: '#C77D0A',
+    cor: '#B7701A',
+    bg: '#F7ECD8',
+    borda: '#B7701A',
     icone: 'warning',
     titulo: 'Sinais de urgência',
     acao: 'Se notar qualquer um destes sinais, entre em contato com o AGAR ainda hoje.',
@@ -45,9 +45,9 @@ const SINAIS = [
   },
   {
     nivel: 'ATENCAO',
-    cor: '#2B6CB0',
-    bg: '#EBF8FF',
-    borda: '#2B6CB0',
+    cor: '#3F6E8C',
+    bg: '#E6EEF2',
+    borda: '#3F6E8C',
     icone: 'information-circle',
     titulo: 'Sinais de atenção',
     acao: 'Vale comentar qualquer um destes pontos na sua próxima consulta.',

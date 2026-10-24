@@ -116,7 +116,7 @@ async function esqueciSenha(req, res) {
 
   const gestante = await req.prisma.gestante.findUnique({ where: { email } });
 
-  // Resposta genérica sempre — não revela se o e-mail existe ou não na base.
+  // Resposta genérica sempre - não revela se o e-mail existe ou não na base.
   const resposta = { mensagem: 'Se este e-mail estiver cadastrado, enviamos um código de verificação.' };
 
   if (!gestante || !gestante.ativo) {

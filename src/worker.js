@@ -1,6 +1,6 @@
 // Entrypoint do Cloudflare Worker. Express foi trocado por Hono (equivalente,
 // nativo da plataforma); os controllers em src/controllers/ continuam com a
-// assinatura (req, res) do Express — o adaptador abaixo (toHono) faz a ponte,
+// assinatura (req, res) do Express - o adaptador abaixo (toHono) faz a ponte,
 // então a lógica de negócio em si não precisou ser reescrita.
 const { Hono } = require('hono');
 const { cors } = require('hono/cors');
@@ -26,7 +26,7 @@ const app = new Hono({ strict: false });
 app.use('*', secureHeaders());
 app.use('*', cors());
 
-// `process.env` não existe nativamente no Worker — os secrets (wrangler secret put)
+// `process.env` não existe nativamente no Worker - os secrets (wrangler secret put)
 // só chegam via c.env. Espelha aqui pra todo o código legado do Express (controllers,
 // jsonwebtoken) continuar lendo process.env.JWT_SECRET sem precisar ser reescrito.
 app.use('*', async (c, next) => {

@@ -130,7 +130,7 @@ const paths = {
 const spec = {
   openapi: '3.0.0',
   info: {
-    title: 'AGAR Digital — API REST',
+    title: 'AGAR Digital - API REST',
     version: '1.0.0',
     description: 'Documentação interativa dos endpoints do back-end do AGAR Digital, agrupados por módulo funcional.',
   },

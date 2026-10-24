@@ -65,7 +65,7 @@ async function updateSenha(req, res) {
   return res.json({ mensagem: 'Senha atualizada com sucesso' });
 }
 
-// LGPD — portabilidade: exporta todos os dados pessoais e registros de saúde da gestante.
+// LGPD - portabilidade: exporta todos os dados pessoais e registros de saúde da gestante.
 async function exportarDados(req, res) {
   const gestante = await req.prisma.gestante.findUnique({
     where: { id: req.gestanteId },
@@ -94,7 +94,7 @@ async function exportarDados(req, res) {
   });
 }
 
-// LGPD — direito ao esquecimento: exclui definitivamente a conta e todos os dados vinculados.
+// LGPD - direito ao esquecimento: exclui definitivamente a conta e todos os dados vinculados.
 async function excluirConta(req, res) {
   const { senha } = req.body;
   if (!senha) {
