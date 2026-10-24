@@ -61,7 +61,7 @@ const paths = {
               required: ['nome', 'email', 'senha', 'semanaInicial'],
               properties: {
                 nome: { type: 'string' }, email: { type: 'string' }, senha: { type: 'string' },
-                telefone: { type: 'string' }, semanaInicial: { type: 'integer' },
+                telefone: { type: 'string' }, semanaInicial: { type: 'integer' }, quantidadeBebes: { type: 'integer', minimum: 1, maximum: 4, default: 1 },
               },
             },
           },

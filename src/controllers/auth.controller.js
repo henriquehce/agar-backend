@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const { normalizarQuantidadeBebes } = require('../lib/quantidadeBebes');
 const jwt = require('jsonwebtoken');
 
 const EXAMES_PADRAO = [
@@ -24,7 +25,7 @@ const EXAMES_PADRAO = [
 const VERSAO_TERMOS_ATUAL = '1.1';
 
 async function cadastrar(req, res) {
-  const { nome, nomeSocial, identidadeGenero, email, senha, telefone, cpf, dataNascimento, tipoSanguineo, semanaInicial, ultimaMenstruacao, medico, alergias, medicamentos, doencas, aceitouLgpd } = req.body;
+  const { nome, nomeSocial, identidadeGenero, email, senha, telefone, cpf, dataNascimento, tipoSanguineo, semanaInicial, quantidadeBebes, ultimaMenstruacao, medico, alergias, medicamentos, doencas, aceitouLgpd } = req.body;
 
   if (!nome || !email || !senha || semanaInicial === undefined) {
     return res.status(400).json({ erro: 'nome, email, senha e semanaInicial são obrigatórios' });
@@ -32,6 +33,11 @@ async function cadastrar(req, res) {
 
   if (aceitouLgpd !== true) {
     return res.status(400).json({ erro: 'É necessário aceitar os Termos de Uso e a Política de Privacidade para se cadastrar' });
+  }
+
+  const bebes = normalizarQuantidadeBebes(quantidadeBebes);
+  if (bebes === null) {
+    return res.status(400).json({ erro: 'quantidadeBebes deve ser um número entre 1 e 4' });
   }
 
   const existe = await req.prisma.gestante.findUnique({ where: { email } });
@@ -44,7 +50,7 @@ async function cadastrar(req, res) {
   const gestante = await req.prisma.gestante.create({
     data: {
       nome, nomeSocial, identidadeGenero, email, senha: hash, telefone, cpf, dataNascimento, tipoSanguineo,
-      semanaInicial: Number(semanaInicial), ultimaMenstruacao, medico, alergias, medicamentos, doencas,
+      semanaInicial: Number(semanaInicial), quantidadeBebes: bebes ?? 1, ultimaMenstruacao, medico, alergias, medicamentos, doencas,
       consentimentoLgpd: true, consentimentoData: new Date(), consentimentoVersao: VERSAO_TERMOS_ATUAL,
     },
   });

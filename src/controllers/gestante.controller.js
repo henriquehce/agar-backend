@@ -1,8 +1,9 @@
 const bcrypt = require('bcryptjs');
+const { normalizarQuantidadeBebes } = require('../lib/quantidadeBebes');
 
 const PERFIL_SELECT = {
   id: true, nome: true, nomeSocial: true, identidadeGenero: true, email: true, telefone: true, cpf: true,
-  dataNascimento: true, tipoSanguineo: true, semanaInicial: true,
+  dataNascimento: true, tipoSanguineo: true, semanaInicial: true, quantidadeBebes: true,
   ultimaMenstruacao: true, medico: true, alergias: true,
   medicamentos: true, doencas: true, fotoUrl: true,
   dataCadastro: true, criadoEm: true, atualizadoEm: true,
@@ -21,7 +22,10 @@ async function getPerfil(req, res) {
 }
 
 async function updatePerfil(req, res) {
-  const { nome, nomeSocial, identidadeGenero, telefone, cpf, dataNascimento, tipoSanguineo, semanaInicial, ultimaMenstruacao, medico, alergias, medicamentos, doencas, fotoUrl, consentimentoPesquisa, consentimentoNotificacoes } = req.body;
+  const { nome, nomeSocial, identidadeGenero, telefone, cpf, dataNascimento, tipoSanguineo, semanaInicial, quantidadeBebes, ultimaMenstruacao, medico, alergias, medicamentos, doencas, fotoUrl, consentimentoPesquisa, consentimentoNotificacoes } = req.body;
+
+  const bebes = normalizarQuantidadeBebes(quantidadeBebes);
+  if (bebes === null) return res.status(400).json({ erro: 'quantidadeBebes deve ser um número entre 1 e 4' });
 
   const gestante = await req.prisma.gestante.update({
     where: { id: req.gestanteId },
@@ -34,6 +38,7 @@ async function updatePerfil(req, res) {
       ...(dataNascimento !== undefined && { dataNascimento }),
       ...(tipoSanguineo !== undefined && { tipoSanguineo }),
       ...(semanaInicial !== undefined && { semanaInicial: Number(semanaInicial) }),
+      ...(bebes !== undefined && { quantidadeBebes: bebes }),
       ...(ultimaMenstruacao !== undefined && { ultimaMenstruacao }),
       ...(medico !== undefined && { medico }),
       ...(alergias !== undefined && { alergias }),

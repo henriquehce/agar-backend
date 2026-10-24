@@ -18,6 +18,7 @@ model Gestante {
   dataNascimento   String?
   tipoSanguineo    String?
   semanaInicial    Int
+  quantidadeBebes  Int       @default(1)
   dataCadastro     DateTime  @default(now())
   medico           String?
   alergias         String?
