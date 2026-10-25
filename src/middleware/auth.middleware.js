@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 function autenticar(req, res, next) {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ erro: 'Token não fornecido' });
+    return res.status(401).json({ erro: 'Token não fornecido', codigo: 'SESSAO_INVALIDA' });
   }
 
   const token = authHeader.split(' ')[1];
@@ -12,7 +12,7 @@ function autenticar(req, res, next) {
     req.gestanteId = payload.id;
     next();
   } catch {
-    return res.status(401).json({ erro: 'Token inválido ou expirado' });
+    return res.status(401).json({ erro: 'Token inválido ou expirado', codigo: 'SESSAO_INVALIDA' });
   }
 }
 
