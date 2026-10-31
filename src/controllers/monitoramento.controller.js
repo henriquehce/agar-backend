@@ -22,7 +22,17 @@ async function criar(req, res) {
   }
 
   const v1 = Number(valor1);
-  const v2 = valor2 !== undefined ? Number(valor2) : null;
+  const v2 = valor2 !== undefined && valor2 !== null ? Number(valor2) : null;
+  // RN08: mesmas faixas plausiveis validadas no aplicativo, repetidas aqui para
+  // que nenhum cliente consiga gravar valor invalido (antes, texto virava NaN).
+  const inteiroEntre = (v, min, max) => Number.isInteger(v) && v >= min && v <= max;
+  if (tipo === 'pressao') {
+    if (!inteiroEntre(v1, 50, 260) || !inteiroEntre(v2, 30, 160) || v2 >= v1) {
+      return res.status(400).json({ erro: 'Pressão inválida: máxima entre 50 e 260, mínima entre 30 e 160, e máxima maior que a mínima' });
+    }
+  } else if (!inteiroEntre(v1, 20, 600)) {
+    return res.status(400).json({ erro: 'Glicemia inválida: informe um valor inteiro entre 20 e 600 mg/dL' });
+  }
   const nivelRisco = calcularNivelRisco({ tipo, valor1: v1, valor2: v2, subtipo });
 
   const registro = await req.prisma.monitoramento.create({
