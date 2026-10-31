@@ -7,7 +7,8 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon src/server.js",
     "start": "node src/server.js",
-    "seed:alertas": "node prisma/seed-alertas.js"
+    "seed:alertas": "node prisma/seed-alertas.js",
+    "sbom": "npm sbom --sbom-format cyclonedx --omit dev > sbom.cdx.json"
   },
   "keywords": [],
   "author": "",
