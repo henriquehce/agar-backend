@@ -39,16 +39,19 @@ async function criar(req, res) {
   return res.status(201).json(registro);
 }
 
+// Alerta reflete o estado atual: so a medicao mais recente de cada tipo conta.
+// Uma pressao alta antiga, seguida de uma normal, nao deve continuar gerando aviso.
 async function alertas(req, res) {
-  const recentes = await req.prisma.monitoramento.findMany({
-    where: {
-      gestanteId: req.gestanteId,
-      nivelRisco: { in: ['alto', 'critico'] },
-    },
-    orderBy: { criadoEm: 'desc' },
-    take: 5,
-  });
-  return res.json(recentes);
+  const ultimas = await Promise.all(['pressao', 'glicemia'].map((tipo) =>
+    req.prisma.monitoramento.findFirst({
+      where: { gestanteId: req.gestanteId, tipo },
+      orderBy: { criadoEm: 'desc' },
+    })
+  ));
+  const ativos = ultimas
+    .filter((m) => m && ['alto', 'critico'].includes(m.nivelRisco))
+    .sort((a, b) => (a.nivelRisco === 'critico' ? -1 : 0) - (b.nivelRisco === 'critico' ? -1 : 0));
+  return res.json(ativos);
 }
 
 async function remover(req, res) {
