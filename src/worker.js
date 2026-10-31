@@ -126,6 +126,17 @@ app.get('/alertas', toHono(alertaCtrl.listar));
 // ---- Documentação ----
 app.get('/openapi.json', (c) => c.json(swaggerSpec));
 
+// Swagger UI servido pela propria API: a documentacao nao depende do GitHub Pages
+// (que exige repositorio publico no plano gratuito).
+app.get('/docs', (c) => c.html(`<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AGAR Digital - API</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.min.css">
+</head><body><div id="swagger"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.min.js"></script>
+<script>SwaggerUIBundle({ url: '/openapi.json', dom_id: '#swagger' });</script>
+</body></html>`));
+
 app.get('/', (c) => c.json({ status: 'AGAR API online', versao: '1.0.0', infra: 'Cloudflare Workers + D1' }));
 
 export default app;
