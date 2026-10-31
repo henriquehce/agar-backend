@@ -27,9 +27,9 @@ const SINAIS = [
   },
   {
     nivel: 'URGENTE',
-    cor: '#B7701A',
+    cor: '#94590F',
     bg: '#F7ECD8',
-    borda: '#B7701A',
+    borda: '#94590F',
     icone: 'warning',
     titulo: 'Sinais de urgência',
     acao: 'Se notar qualquer um destes sinais, entre em contato com o AGAR ainda hoje.',
