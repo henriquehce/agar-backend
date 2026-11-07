@@ -94,6 +94,7 @@ model Exame {
   nome           String
   realizado      Boolean  @default(false)
   dataRealizacao String?
+  anexoUrl       String?
   criadoEm      DateTime @default(now())
 
   gestante       Gestante @relation(fields: [gestanteId], references: [id], onDelete: Cascade)

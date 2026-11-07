@@ -48,7 +48,7 @@ function toHono(handler, { privado = true } = {}) {
       ip: c.req.header('cf-connecting-ip') || '',
       prisma: c.get('prisma'),
     };
-    if (['POST', 'PUT', 'PATCH'].includes(c.req.method)) {
+    if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(c.req.method)) {
       req.body = await c.req.json().catch(() => ({}));
     }
 
