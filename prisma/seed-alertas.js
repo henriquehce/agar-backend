@@ -23,7 +23,7 @@ const SINAIS = [
       'Convulsões ou desmaio',
       'Febre acima de 39°C com dor intensa',
     ]),
-    ordem: 0,
+    ordem: 2,
   },
   {
     nivel: 'URGENTE',
@@ -59,7 +59,7 @@ const SINAIS = [
       'Coceira intensa no corpo',
       'Pressão entre 130/85 e 139/89 mmHg',
     ]),
-    ordem: 2,
+    ordem: 0,
   },
 ];
 
