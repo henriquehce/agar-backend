@@ -188,6 +188,9 @@ model Profissional {
   registro     String   // COREN, CRM etc.
   funcao       String   // enfermeira(o), médica(o), ...
   ativo        Boolean  @default(false)
+  coordenador  Boolean  @default(false) // libera e bloqueia outros profissionais (RF23)
+  aprovadoEm   DateTime?
+  aprovadoPorId Int?    // id do coordenador que liberou (auditoria)
   criadoEm     DateTime @default(now())
   atualizadoEm DateTime @updatedAt
 

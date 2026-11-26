@@ -9,7 +9,7 @@ const JANELA_MS = 15 * 60 * 1000;
 // Tentativas de código de vínculo erradas por profissional, para impedir adivinhação.
 const LIMITE_CODIGO = 10;
 
-const PERFIL = { id: true, nome: true, email: true, registro: true, funcao: true, ativo: true, criadoEm: true };
+const PERFIL = { id: true, nome: true, email: true, registro: true, funcao: true, ativo: true, coordenador: true, criadoEm: true };
 
 // Dados da gestante que o profissional vê. Ficam de fora CPF, e-mail, senha e o
 // diário de anotações, que é pessoal (necessidade, art. 6º, III, da LGPD).
@@ -73,7 +73,9 @@ async function login(req, res) {
   await req.prisma.logAcesso.create({ data: { email: 'profissional:' + emailNorm, sucesso: Boolean(ok), ip } });
   if (!ok) return res.status(401).json({ erro: 'Credenciais inválidas' });
   if (!prof.ativo) {
-    return res.status(403).json({ erro: 'Seu cadastro ainda está aguardando a liberação da coordenação do AGAR.', codigo: 'AGUARDANDO_APROVACAO' });
+    return prof.aprovadoEm
+      ? res.status(403).json({ erro: 'Seu acesso foi bloqueado pela coordenação do AGAR. Procure a coordenação para mais informações.', codigo: 'ACESSO_BLOQUEADO' })
+      : res.status(403).json({ erro: 'Seu cadastro ainda está aguardando a liberação da coordenação do AGAR.', codigo: 'AGUARDANDO_APROVACAO' });
   }
 
   // O tipo no token impede que ele seja aceito nas rotas da gestante.
@@ -93,7 +95,69 @@ async function _profissionalAtivo(req, res) {
 
 async function perfil(req, res) {
   const prof = await _profissionalAtivo(req, res);
-  if (prof) return res.json(prof);
+  if (!prof) return;
+  // Para a coordenação, o painel mostra quantos pedidos aguardam liberação.
+  const pendentes = prof.coordenador ? await req.prisma.profissional.count({ where: { ativo: false, aprovadoEm: null } }) : 0;
+  return res.json({ ...prof, pendentes });
+}
+
+// ---- Coordenação do AGAR (RF23) ----
+async function _coordenador(req, res) {
+  const prof = await _profissionalAtivo(req, res);
+  if (!prof) return null;
+  if (!prof.coordenador) {
+    res.status(403).json({ erro: 'Apenas a coordenação do AGAR pode gerenciar os acessos.' });
+    return null;
+  }
+  return prof;
+}
+
+// Regras de alteração de um profissional pela coordenação. Fica separada para ser testada.
+function validarAlteracao(coordenadorId, alvo, acao) {
+  if (!alvo) return { status: 404, erro: 'Profissional não encontrado' };
+  if (alvo.id === coordenadorId) return { status: 400, erro: 'Você não pode alterar o próprio acesso.' };
+  if (alvo.coordenador) return { status: 400, erro: 'O acesso de outra pessoa da coordenação só pode ser alterado pelo administrador do sistema.' };
+  if (acao === 'recusar' && (alvo.ativo || alvo.aprovadoEm)) return { status: 400, erro: 'Só é possível recusar um pedido que ainda não foi liberado. Para quem já teve acesso, use Bloquear.' };
+  return null;
+}
+
+async function listarProfissionaisCoordenacao(req, res) {
+  if (!(await _coordenador(req, res))) return;
+  const lista = await req.prisma.profissional.findMany({
+    select: { id: true, nome: true, email: true, registro: true, funcao: true, ativo: true, coordenador: true, criadoEm: true, aprovadoEm: true,
+      _count: { select: { vinculos: { where: { revogadoEm: null } } } } },
+    orderBy: { criadoEm: 'desc' },
+  });
+  return res.json(lista.map(({ _count, ...p }) => ({ ...p, gestantesVinculadas: _count.vinculos })));
+}
+
+// Libera (ativo: true) ou bloqueia (ativo: false) um profissional. Bloquear não apaga
+// os vínculos: se a conta voltar a ser liberada, as gestantes continuam autorizando.
+async function alterarAcesso(req, res) {
+  const coord = await _coordenador(req, res);
+  if (!coord) return;
+  const id = Number(req.params.id);
+  const alvo = Number.isInteger(id) && id > 0 ? await req.prisma.profissional.findUnique({ where: { id } }) : null;
+  const erro = validarAlteracao(coord.id, alvo, 'alterar');
+  if (erro) return res.status(erro.status).json({ erro: erro.erro });
+  const ativo = req.body.ativo === true;
+  await req.prisma.profissional.update({
+    where: { id },
+    data: ativo ? { ativo: true, aprovadoEm: new Date(), aprovadoPorId: coord.id } : { ativo: false },
+  });
+  return res.json({ mensagem: ativo ? 'Acesso liberado.' : 'Acesso bloqueado.' });
+}
+
+// Recusa um pedido que nunca foi liberado: a conta é excluída.
+async function recusarPedido(req, res) {
+  const coord = await _coordenador(req, res);
+  if (!coord) return;
+  const id = Number(req.params.id);
+  const alvo = Number.isInteger(id) && id > 0 ? await req.prisma.profissional.findUnique({ where: { id } }) : null;
+  const erro = validarAlteracao(coord.id, alvo, 'recusar');
+  if (erro) return res.status(erro.status).json({ erro: erro.erro });
+  await req.prisma.profissional.delete({ where: { id } });
+  return res.json({ mensagem: 'Pedido recusado.' });
 }
 
 async function vincular(req, res) {
@@ -192,4 +256,4 @@ async function relatorio(req, res) {
   return res.json({ geradoEm: new Date(), gestante, monitoramentos, consultas, exames, registrosMensais, movimentosFetais });
 }
 
-module.exports = { cadastrar, login, perfil, vincular, listarGestantes, relatorio };
+module.exports = { cadastrar, login, perfil, vincular, listarGestantes, relatorio, listarProfissionaisCoordenacao, alterarAcesso, recusarPedido, validarAlteracao };

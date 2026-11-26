@@ -99,6 +99,10 @@ app.get('/profissional/perfil', toHono(profissionalCtrl.perfil, prof));
 app.post('/profissional/vincular', toHono(profissionalCtrl.vincular, prof));
 app.get('/profissional/gestantes', toHono(profissionalCtrl.listarGestantes, prof));
 app.get('/profissional/gestantes/:id/relatorio', toHono(profissionalCtrl.relatorio, prof));
+// ---- Coordenação do AGAR (RF23) ----
+app.get('/profissional/coordenacao/profissionais', toHono(profissionalCtrl.listarProfissionaisCoordenacao, prof));
+app.put('/profissional/coordenacao/profissionais/:id', toHono(profissionalCtrl.alterarAcesso, prof));
+app.delete('/profissional/coordenacao/profissionais/:id', toHono(profissionalCtrl.recusarPedido, prof));
 
 // ---- Consultas ----
 app.get('/consultas', toHono(consultaCtrl.listar));

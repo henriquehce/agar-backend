@@ -146,6 +146,13 @@ const paths = {
   '/profissional/gestantes/{id}/relatorio': {
     get: { tags: ['Profissional'], summary: 'Relatório somente leitura da gestante; o acesso é registrado (RF21)', security: bearerAuth, parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Relatório' }, 404: { description: 'Sem vínculo ativo' } } },
   },
+  '/profissional/coordenacao/profissionais': {
+    get: { tags: ['Coordenação'], summary: 'Lista os profissionais e os pedidos de acesso; apenas coordenação (RF23)', security: bearerAuth, responses: { 200: { description: 'Profissionais' }, 403: { description: 'Não é coordenação' } } },
+  },
+  '/profissional/coordenacao/profissionais/{id}': {
+    put: { tags: ['Coordenação'], summary: 'Libera ({ativo:true}) ou bloqueia ({ativo:false}) um profissional; registra quem liberou (RF23)', security: bearerAuth, parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Alterado' }, 400: { description: 'Regra violada' } } },
+    delete: { tags: ['Coordenação'], summary: 'Recusa um pedido que nunca foi liberado (exclui a conta) (RF23)', security: bearerAuth, parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Recusado' } } },
+  },
   '/alertas': {
     get: { tags: ['Alertas'], summary: 'Lista os sinais de alerta ativos (RF14)', security: bearerAuth, responses: { 200: { description: 'Lista de sinais de alerta' } } },
   },
