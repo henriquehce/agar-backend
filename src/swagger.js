@@ -1,6 +1,6 @@
-// Documentação interativa da API (OpenAPI 3.0), servida em /api-docs.
+// Documentação interativa da API (OpenAPI 3.0), servida em /docs (JSON em /openapi.json).
 // Especificação escrita à mão (em vez de anotações JSDoc espalhadas pelas rotas) para manter
-// tudo num único lugar, fácil de conferir contra as rotas reais em src/routes/.
+// tudo num único lugar, fácil de conferir contra as rotas reais em src/worker.js.
 
 const respostaErro = {
   type: 'object',
@@ -160,7 +160,7 @@ const spec = {
   },
   servers: [
     { url: 'https://agar-backend.henrique-cipriani.workers.dev', description: 'Produção (Cloudflare Workers)' },
-    { url: 'http://localhost:3000', description: 'Ambiente de desenvolvimento local (Express)' },
+    { url: 'http://localhost:8787', description: 'Desenvolvimento local (wrangler dev)' },
   ],
   components: {
     securitySchemes: {
