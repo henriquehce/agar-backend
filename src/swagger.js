@@ -122,6 +122,30 @@ const paths = {
   '/movimentos-fetais/{id}': {
     delete: { tags: ['MovimentosFetais'], summary: 'Remove um registro de contagem de movimentos fetais (RF09)', security: bearerAuth, parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Removido' } } },
   },
+  '/gestante/codigo-vinculo': {
+    post: { tags: ['Gestante'], summary: 'Gera um código de uso único, válido por 30 minutos, para autorizar um profissional (RN11)', security: bearerAuth, responses: { 201: { description: 'Código e validade' } } },
+  },
+  '/gestante/profissionais': {
+    get: { tags: ['Gestante'], summary: 'Lista os profissionais autorizados e o último acesso de cada um (RN11)', security: bearerAuth, responses: { 200: { description: 'Profissionais autorizados' } } },
+  },
+  '/gestante/profissionais/{id}': {
+    delete: { tags: ['Gestante'], summary: 'Revoga o acesso de um profissional (RN11)', security: bearerAuth, parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Acesso removido' } } },
+  },
+  '/auth/profissional/cadastro': {
+    post: { tags: ['Profissional'], summary: 'Cadastro do profissional de saúde; a conta fica inativa até a coordenação liberar (RF20)', requestBody: { content: { 'application/json': { schema: { type: 'object', required: ['nome', 'email', 'senha', 'registro', 'funcao'], properties: { nome: { type: 'string' }, email: { type: 'string' }, senha: { type: 'string' }, registro: { type: 'string' }, funcao: { type: 'string' } } } } } }, responses: { 201: { description: 'Cadastro recebido' }, 409: { description: 'E-mail já cadastrado' } } },
+  },
+  '/auth/profissional/login': {
+    post: { tags: ['Profissional'], summary: 'Login do profissional; retorna token do tipo profissional (RF20)', responses: { 200: { description: 'Token' }, 403: { description: 'Aguardando aprovação' } } },
+  },
+  '/profissional/vincular': {
+    post: { tags: ['Profissional'], summary: 'Vincula uma gestante a partir do código gerado por ela (RN11)', security: bearerAuth, responses: { 201: { description: 'Vinculada' }, 404: { description: 'Código inválido ou expirado' } } },
+  },
+  '/profissional/gestantes': {
+    get: { tags: ['Profissional'], summary: 'Painel com as gestantes vinculadas, com prioridade para medições alteradas (RF21)', security: bearerAuth, responses: { 200: { description: 'Gestantes vinculadas' } } },
+  },
+  '/profissional/gestantes/{id}/relatorio': {
+    get: { tags: ['Profissional'], summary: 'Relatório somente leitura da gestante; o acesso é registrado (RF21)', security: bearerAuth, parameters: [{ name: 'id', in: 'path', required: true, schema: { type: 'integer' } }], responses: { 200: { description: 'Relatório' }, 404: { description: 'Sem vínculo ativo' } } },
+  },
   '/alertas': {
     get: { tags: ['Alertas'], summary: 'Lista os sinais de alerta ativos (RF14)', security: bearerAuth, responses: { 200: { description: 'Lista de sinais de alerta' } } },
   },

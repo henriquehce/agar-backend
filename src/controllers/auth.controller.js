@@ -81,8 +81,10 @@ async function login(req, res) {
 
   if (ip) {
     const desde = new Date(Date.now() - LOGIN_JANELA_MS);
+    // Registros do módulo do profissional (login, vínculo, cadastro) têm prefixo e
+    // não consomem a cota de login das gestantes no mesmo IP (ex.: Wi-Fi do ambulatório).
     const tentativas = await req.prisma.logAcesso.count({
-      where: { ip, criadoEm: { gte: desde } },
+      where: { ip, criadoEm: { gte: desde }, NOT: [{ email: { startsWith: 'profissional:' } }, { email: { startsWith: 'vinculo:' } }, { email: { startsWith: 'cadastro-profissional:' } }] },
     });
     if (tentativas >= LOGIN_LIMITE_TENTATIVAS) {
       return res.status(429).json({ erro: 'Muitas tentativas. Aguarde alguns minutos e tente novamente.' });

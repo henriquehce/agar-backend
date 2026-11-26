@@ -14,6 +14,7 @@ const registroMensalRoutes = require('./routes/registroMensal.routes');
 const anotacaoRoutes = require('./routes/anotacao.routes');
 const movimentoFetalRoutes = require('./routes/movimentoFetal.routes');
 const alertaRoutes = require('./routes/alerta.routes');
+const profissionalRoutes = require('./routes/profissional.routes');
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/registros-mensais', registroMensalRoutes);
 app.use('/anotacoes', anotacaoRoutes);
 app.use('/movimentos-fetais', movimentoFetalRoutes);
 app.use('/alertas', alertaRoutes);
+app.use('/profissional', profissionalRoutes);
 
 // Documentação interativa da API (Swagger UI). Desabilita o CSP do Helmet só aqui,
 // pois o CSP padrão bloqueia os scripts/estilos inline que o Swagger UI usa.

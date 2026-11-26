@@ -8,7 +8,7 @@ const { secureHeaders } = require('hono/secure-headers');
 const jwt = require('jsonwebtoken');
 
 const { criarPrisma } = require('./lib/prisma');
-const autenticar = require('./middleware/auth.middleware');
+const { autenticar, autenticarProfissional } = require('./middleware/auth.middleware');
 
 const authCtrl = require('./controllers/auth.controller');
 const gestanteCtrl = require('./controllers/gestante.controller');
@@ -19,6 +19,7 @@ const registroMensalCtrl = require('./controllers/registroMensal.controller');
 const anotacaoCtrl = require('./controllers/anotacao.controller');
 const movimentoFetalCtrl = require('./controllers/movimentoFetal.controller');
 const alertaCtrl = require('./controllers/alerta.controller');
+const profissionalCtrl = require('./controllers/profissional.controller');
 const swaggerSpec = require('./swagger');
 
 const app = new Hono({ strict: false });
@@ -37,8 +38,9 @@ app.use('*', async (c, next) => {
 });
 
 // Adapta um controller no formato Express (req, res) pra um handler Hono.
-// `privado` decide se passa pelo middleware de autenticação antes.
-function toHono(handler, { privado = true } = {}) {
+// `privado` decide se passa pelo middleware de autenticação antes; `profissional`
+// troca o middleware da gestante pelo do profissional de saúde.
+function toHono(handler, { privado = true, profissional = false } = {}) {
   return async (c) => {
     const req = {
       body: {},
@@ -62,7 +64,7 @@ function toHono(handler, { privado = true } = {}) {
     if (privado) {
       let autenticado = false;
       await new Promise((resolve) => {
-        autenticar(req, res, () => { autenticado = true; resolve(); });
+        (profissional ? autenticarProfissional : autenticar)(req, res, () => { autenticado = true; resolve(); });
         if (!autenticado) resolve();
       });
       if (!autenticado) return c.json(payload, statusCode);
@@ -85,6 +87,18 @@ app.put('/gestante/perfil', toHono(gestanteCtrl.updatePerfil));
 app.put('/gestante/senha', toHono(gestanteCtrl.updateSenha));
 app.get('/gestante/meus-dados', toHono(gestanteCtrl.exportarDados));
 app.delete('/gestante/conta', toHono(gestanteCtrl.excluirConta));
+app.post('/gestante/codigo-vinculo', toHono(gestanteCtrl.gerarCodigoVinculo));
+app.get('/gestante/profissionais', toHono(gestanteCtrl.listarProfissionais));
+app.delete('/gestante/profissionais/:id', toHono(gestanteCtrl.revogarProfissional));
+
+// ---- Profissional de saúde (RF20, RF21, RN11) ----
+app.post('/auth/profissional/cadastro', toHono(profissionalCtrl.cadastrar, { privado: false }));
+app.post('/auth/profissional/login', toHono(profissionalCtrl.login, { privado: false }));
+const prof = { profissional: true };
+app.get('/profissional/perfil', toHono(profissionalCtrl.perfil, prof));
+app.post('/profissional/vincular', toHono(profissionalCtrl.vincular, prof));
+app.get('/profissional/gestantes', toHono(profissionalCtrl.listarGestantes, prof));
+app.get('/profissional/gestantes/:id/relatorio', toHono(profissionalCtrl.relatorio, prof));
 
 // ---- Consultas ----
 app.get('/consultas', toHono(consultaCtrl.listar));

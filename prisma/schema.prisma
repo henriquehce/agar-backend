@@ -45,12 +45,18 @@ model Gestante {
   resetSenhaHash    String?
   resetSenhaExpira  DateTime?
 
+  // Código temporário para autorizar um profissional (hash SHA-256, uso único, 30 min)
+  codigoVinculoHash   String?
+  codigoVinculoExpira DateTime?
+
   consultas        Consulta[]
   monitoramentos   Monitoramento[]
   exames           Exame[]
   registrosMensais RegistroMensal[]
   anotacoes        Anotacao[]
   movimentosFetais MovimentoFetal[]
+  vinculos         VinculoProfissional[]
+  acessosProfissional AcessoProfissional[]
 
   @@map("gestantes")
 }
@@ -172,4 +178,50 @@ model LogAcesso {
   criadoEm  DateTime @default(now())
 
   @@map("logs_acesso")
+}
+// Profissional de saúde do AGAR (RF20). A conta nasce inativa e só a coordenação a ativa.
+model Profissional {
+  id           Int      @id @default(autoincrement())
+  nome         String
+  email        String   @unique
+  senha        String
+  registro     String   // COREN, CRM etc.
+  funcao       String   // enfermeira(o), médica(o), ...
+  ativo        Boolean  @default(false)
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  vinculos VinculoProfissional[]
+  acessos  AcessoProfissional[]
+
+  @@map("profissionais")
+}
+
+// Autorização da gestante para um profissional ver o relatório dela (RN09).
+model VinculoProfissional {
+  id             Int       @id @default(autoincrement())
+  gestanteId     Int
+  profissionalId Int
+  criadoEm       DateTime  @default(now())
+  revogadoEm     DateTime?
+
+  gestante     Gestante     @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+
+  @@unique([gestanteId, profissionalId])
+  @@map("vinculos_profissional")
+}
+
+// Cada abertura de relatório por um profissional (auditoria, visível para a gestante).
+model AcessoProfissional {
+  id             Int      @id @default(autoincrement())
+  gestanteId     Int
+  profissionalId Int
+  criadoEm       DateTime @default(now())
+
+  gestante     Gestante     @relation(fields: [gestanteId], references: [id], onDelete: Cascade)
+  profissional Profissional @relation(fields: [profissionalId], references: [id], onDelete: Cascade)
+
+  @@index([gestanteId])
+  @@map("acessos_profissional")
 }

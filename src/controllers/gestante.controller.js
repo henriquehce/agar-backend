@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const { gerarCodigo, hashCodigo, VALIDADE_MS } = require('../lib/vinculo');
 const { normalizarQuantidadeBebes } = require('../lib/quantidadeBebes');
 
 const PERFIL_SELECT = {
@@ -78,13 +79,15 @@ async function exportarDados(req, res) {
   });
   if (!gestante) return res.status(404).json({ erro: 'Gestante não encontrada' });
 
-  const [consultas, monitoramentos, exames, registrosMensais, anotacoes, movimentosFetais] = await Promise.all([
+  const [consultas, monitoramentos, exames, registrosMensais, anotacoes, movimentosFetais, profissionais, acessosProfissionais] = await Promise.all([
     req.prisma.consulta.findMany({ where: { gestanteId: req.gestanteId } }),
     req.prisma.monitoramento.findMany({ where: { gestanteId: req.gestanteId } }),
     req.prisma.exame.findMany({ where: { gestanteId: req.gestanteId } }),
     req.prisma.registroMensal.findMany({ where: { gestanteId: req.gestanteId } }),
     req.prisma.anotacao.findMany({ where: { gestanteId: req.gestanteId } }),
     req.prisma.movimentoFetal.findMany({ where: { gestanteId: req.gestanteId } }),
+    req.prisma.vinculoProfissional.findMany({ where: { gestanteId: req.gestanteId }, include: { profissional: { select: { nome: true, registro: true, funcao: true } } } }),
+    req.prisma.acessoProfissional.findMany({ where: { gestanteId: req.gestanteId }, include: { profissional: { select: { nome: true, registro: true } } } }),
   ]);
 
   return res.json({
@@ -96,6 +99,8 @@ async function exportarDados(req, res) {
     registrosMensais,
     anotacoes,
     movimentosFetais,
+    profissionaisAutorizados: profissionais,
+    acessosDeProfissionais: acessosProfissionais,
   });
 }
 
@@ -115,4 +120,42 @@ async function excluirConta(req, res) {
   return res.json({ mensagem: 'Conta e todos os dados associados foram excluídos permanentemente' });
 }
 
-module.exports = { getPerfil, updatePerfil, updateSenha, exportarDados, excluirConta };
+// RN11: a gestante gera um código de uso único para autorizar um profissional do AGAR.
+// Um novo código substitui o anterior.
+async function gerarCodigoVinculo(req, res) {
+  const codigo = gerarCodigo();
+  const expiraEm = new Date(Date.now() + VALIDADE_MS);
+  await req.prisma.gestante.update({
+    where: { id: req.gestanteId },
+    data: { codigoVinculoHash: hashCodigo(codigo), codigoVinculoExpira: expiraEm },
+  });
+  return res.status(201).json({ codigo, expiraEm });
+}
+
+// Profissionais com acesso ativo, com o último acesso de cada um.
+async function listarProfissionais(req, res) {
+  const vinculos = await req.prisma.vinculoProfissional.findMany({
+    where: { gestanteId: req.gestanteId, revogadoEm: null },
+    include: { profissional: { select: { id: true, nome: true, registro: true, funcao: true } } },
+    orderBy: { criadoEm: 'desc' },
+  });
+  const lista = await Promise.all(vinculos.map(async (v) => {
+    const ultimo = await req.prisma.acessoProfissional.findFirst({
+      where: { gestanteId: req.gestanteId, profissionalId: v.profissionalId },
+      orderBy: { criadoEm: 'desc' },
+    });
+    return { ...v.profissional, autorizadoEm: v.criadoEm, ultimoAcesso: ultimo?.criadoEm || null };
+  }));
+  return res.json(lista);
+}
+
+async function revogarProfissional(req, res) {
+  const profissionalId = Number(req.params.id);
+  if (!Number.isInteger(profissionalId) || profissionalId <= 0) return res.status(404).json({ erro: 'Profissional não encontrado' });
+  const vinculo = await req.prisma.vinculoProfissional.findFirst({ where: { gestanteId: req.gestanteId, profissionalId, revogadoEm: null } });
+  if (!vinculo) return res.status(404).json({ erro: 'Profissional não encontrado' });
+  await req.prisma.vinculoProfissional.update({ where: { id: vinculo.id }, data: { revogadoEm: new Date() } });
+  return res.json({ mensagem: 'Acesso removido' });
+}
+
+module.exports = { getPerfil, updatePerfil, updateSenha, exportarDados, excluirConta, gerarCodigoVinculo, listarProfissionais, revogarProfissional };
